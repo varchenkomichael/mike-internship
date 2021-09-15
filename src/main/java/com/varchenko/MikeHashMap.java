@@ -10,7 +10,7 @@ import java.util.function.Function;
 public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private static final int SIZE = 16;
 
-    private final MikeEntry<K, V> table [] = new MikeEntry[SIZE];
+    private final MikeEntry<K, V> table[] = new MikeEntry[SIZE];
 
     private int indexFor(Object k) {
         return k.hashCode() % SIZE;
@@ -33,18 +33,46 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         MikeEntry<K, V> mikeEntry = table[indexFor(key)];
         if (mikeEntry != null) {
             if (mikeEntry.key.equals(key)) {
-               return mikeEntry.value = (V) value;
+                mikeEntry.value = (V) value;
             } else {
-                while (mikeEntry.next != null){
+                while (mikeEntry.next != null) {
                     mikeEntry = mikeEntry.next;
                 }
-                 mikeEntry.next = new MikeEntry<>((K) key, (V) value);
+                mikeEntry.next = new MikeEntry<>((K) key, (V) value);
             }
         } else {
             MikeEntry<K, V> createNewEntry = new MikeEntry<>((K) key, (V) value);
             table[indexFor(key)] = createNewEntry;
         }
         return null;
+    }
+
+    @Override
+    public V remove(Object key) {
+        MikeEntry<K, V> mikeEntry = table[indexFor(key)];
+        if (mikeEntry != null) {
+            if (mikeEntry.key.equals(key)) {
+                mikeEntry.value = null;
+            } else {
+                while (mikeEntry.next != null) {
+                    mikeEntry = mikeEntry.next;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+        for (K k : m.keySet()) {
+            put(k, m.get(k));
+        }
+    }
+
+    @Override
+    public int size() {
+        MikeEntry<K, V>[] mikeEntry = new MikeEntry[SIZE];
+        return mikeEntry.length;
     }
 
     @Override
