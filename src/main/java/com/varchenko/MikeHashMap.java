@@ -7,36 +7,39 @@ import java.util.function.Function;
 
 public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private static final int DEFAULT_CAPACITY = 16;
-
-    private int CAPACITY;
-
-    public MikeHashMap(int CAPACITY) {
-        this.CAPACITY = CAPACITY;
-    }
-
-    public int getCAPACITY() {
-        return CAPACITY;
-    }
-
-    public void setCAPACITY(int CAPACITY) {
-        this.CAPACITY = CAPACITY;
-    }
-
-    public MikeHashMap() {
-    }
-
+    private int capacity;
+    private int currentSize;
+    private MikeEntry<K, V> current;
     private MikeEntry<K, V>[] bucket;
 
-    private MikeEntry<K, V>[] getBucket() {
-        return bucket;
+    public MikeHashMap() {
+        this.capacity = DEFAULT_CAPACITY;
+        bucket = new MikeEntry[capacity];
+    }
+
+    public MikeHashMap(int capacity) {
+        this.capacity = capacity;
     }
 
 
     private int indexFor(Object k) {
         if (k != null) {
-            return k.hashCode() % DEFAULT_CAPACITY;
+            int index = k.hashCode() % DEFAULT_CAPACITY;
+            return index >= 0 ? index : -index;
         }
         return 0;
+    }
+    private void put_not_null (K key, V value){
+        MikeEntry<K, V> mikeEntry = bucket[indexFor(key)];
+        if (mikeEntry.getKey().equals(key)) {
+            mikeEntry.setValue(value);
+        } else {
+            while (mikeEntry.getNext() != null) {
+                mikeEntry = mikeEntry.getNext();
+                currentSize++;
+            }
+            mikeEntry.setNext(new MikeEntry<>(key, value));
+        }
     }
 
     @Override
@@ -58,26 +61,12 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     public V put(K key, V value) {
         MikeEntry<K, V> mikeEntry = bucket[indexFor(key)];
         if (mikeEntry != null) {
-            if (mikeEntry.getKey().equals(key)) {
-                mikeEntry.setValue(value);
-            } else {
-                while (mikeEntry.getNext() != null) {
-                    mikeEntry = mikeEntry.getNext();
-                }
-                mikeEntry.setNext(new MikeEntry<>(key, value));
-            }
+            put_not_null(key, value);
         } else {
-            MikeEntry<K, V> createNewEntry = new MikeEntry<>(key, value);
-            bucket[indexFor(key)] = createNewEntry;
+            bucket[indexFor(key)] = new MikeEntry<>(key, value);
+            currentSize++;
         }
-        for (MikeEntry<K, V> entry = bucket[0]; entry != null; entry = entry.getNext()) {
-            if (entry.getKey() == null) {
-                V oldValue = entry.getValue();
-                entry.setValue(value);
-                return oldValue;
-            }
-        }
-        return null;
+        return bucket[indexFor(key)].getValue();
     }
 
     @Override
@@ -86,6 +75,7 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         if (mikeEntry != null) {
             if (mikeEntry.getKey().equals(key)) {
                 mikeEntry.setValue(null);
+                currentSize--;
             } else {
                 while (mikeEntry.getNext() != null) {
                     mikeEntry = mikeEntry.getNext();
@@ -99,37 +89,45 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     public void putAll(Map<? extends K, ? extends V> m) {
         for (K k : m.keySet()) {
             put(k, m.get(k));
+            currentSize++;
         }
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        Set<Entry<K, V>> entrySet = new AbstractSet<Entry<K, V>>() {
+        return new AbstractSet<Entry<K, V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return null;
+                return new Iterator<Entry<K, V>>() {
+                    @Override
+                    public boolean hasNext() {
+                        return current.getNext() != null;
+                    }
+
+                    @Override
+                    public MikeEntry<K, V> next() {
+                        if (current.getNext() == null) throw new NoSuchElementException();
+                        return current.getNext();
+                    }
+                };
             }
 
             @Override
             public int size() {
-                return 0;
+                return currentSize;
+            }
+
+            @Override
+            public boolean removeAll(Collection<?> c) {
+                return super.removeAll(c);
             }
         };
-        MikeEntry<K, V>[] mikeEntry = getBucket();
-
-        for (MikeEntry<K, V> kvMikeEntry : mikeEntry) {
-            if (kvMikeEntry != null) {
-                entrySet.add(kvMikeEntry);
-            }
-        }
-        return entrySet;
     }
 
-//    @Override
-//    public int size() {
-//        MikeHashMap<K, V> map = new MikeHashMap<>();
-//
-//    }
+    @Override
+    public int size() {
+        return currentSize;
+    }
 
     @Override
     public V getOrDefault(Object key, V defaultValue) {
