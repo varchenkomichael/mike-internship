@@ -6,22 +6,25 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MikeHashMapTest {
-    private final MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
 
     @Test
     void get() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("get", "test");
         assertEquals(mikeHashMap.get("get"), "test");
+        assertNull(mikeHashMap.get("n"));
     }
 
     @Test
     void put() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("Jon", "Wi");
         assertEquals(mikeHashMap.get("Jon"), "Wi");
     }
 
     @Test
     void remove() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("Jon", "Wi");
         mikeHashMap.put("KON", "lo");
         mikeHashMap.remove("Jon");
@@ -29,11 +32,8 @@ class MikeHashMapTest {
     }
 
     @Test
-    void size_0() {
-        assertEquals(mikeHashMap.size(), 0);
-    }
-    @Test
-    void size_more_0(){
+    void size(){
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("Jon", "Hi");
         assertEquals(1, mikeHashMap.size());
     }

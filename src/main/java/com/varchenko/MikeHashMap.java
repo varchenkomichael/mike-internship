@@ -1,20 +1,17 @@
 package com.varchenko;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private static final int DEFAULT_CAPACITY = 16;
     private int capacity;
     private int currentSize;
-    private MikeEntry<K, V> current;
-    private MikeEntry<K, V>[] bucket;
+    private Node<K, V> current;
+    private Node<K, V>[] bucket;
 
     public MikeHashMap() {
         this.capacity = DEFAULT_CAPACITY;
-        bucket = new MikeEntry[capacity];
+        bucket = new Node[capacity];
     }
 
     public MikeHashMap(int capacity) {
@@ -29,41 +26,39 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         }
         return 0;
     }
-    private void put_not_null (K key, V value){
-        MikeEntry<K, V> mikeEntry = bucket[indexFor(key)];
-        if (mikeEntry.getKey().equals(key)) {
-            mikeEntry.setValue(value);
+
+    private void putNotNull(K key, V value) {
+        Node<K, V> node = bucket[indexFor(key)];
+        if (node.getKey().equals(key)) {
+            node.setValue(value);
         } else {
-            while (mikeEntry.getNext() != null) {
-                mikeEntry = mikeEntry.getNext();
+            while (node.getNext() != null) {
+                node = node.getNext();
                 currentSize++;
             }
-            mikeEntry.setNext(new MikeEntry<>(key, value));
+            node.setNext(new Node<>(key, value));
         }
     }
 
     @Override
     public V get(Object k) {
-        MikeEntry<K, V> mikeEntry = bucket[indexFor(k)];
-        while (mikeEntry != null) {
-            if (mikeEntry.getKey().equals(k)) {
-                return mikeEntry.getValue();
+        Node<K, V> node = bucket[indexFor(k)];
+        if (node != null) {
+            if (node.getKey().equals(k)) {
+                return node.getValue();
             }
-            mikeEntry = mikeEntry.getNext();
-        }
-        for (MikeEntry<K, V> entry = bucket[0]; entry != null; entry = entry.getNext()) {
-            if (entry.getKey() == null) return entry.getValue();
+            return bucket[indexFor(k)].getValue();
         }
         return null;
     }
 
     @Override
     public V put(K key, V value) {
-        MikeEntry<K, V> mikeEntry = bucket[indexFor(key)];
-        if (mikeEntry != null) {
-            put_not_null(key, value);
+        Node<K, V> node = bucket[indexFor(key)];
+        if (node != null) {
+            putNotNull(key, value);
         } else {
-            bucket[indexFor(key)] = new MikeEntry<>(key, value);
+            bucket[indexFor(key)] = new Node<>(key, value);
             currentSize++;
         }
         return bucket[indexFor(key)].getValue();
@@ -71,14 +66,14 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     @Override
     public V remove(Object key) {
-        MikeEntry<K, V> mikeEntry = bucket[indexFor(key)];
-        if (mikeEntry != null) {
-            if (mikeEntry.getKey().equals(key)) {
-                mikeEntry.setValue(null);
+        Node<K, V> node = bucket[indexFor(key)];
+        if (node != null) {
+            if (node.getKey().equals(key)) {
+                node.setValue(null);
                 currentSize--;
             } else {
-                while (mikeEntry.getNext() != null) {
-                    mikeEntry = mikeEntry.getNext();
+                while (node.getNext() != null) {
+                    node = node.getNext();
                 }
             }
         }
@@ -105,8 +100,8 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
                     }
 
                     @Override
-                    public MikeEntry<K, V> next() {
-                        if (current.getNext() == null) throw new NoSuchElementException();
+                    public Node<K, V> next() {
+                        if (current.getNext() == null) return null;
                         return current.getNext();
                     }
                 };
@@ -129,68 +124,13 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         return currentSize;
     }
 
-    @Override
-    public V getOrDefault(Object key, V defaultValue) {
-        return Map.super.getOrDefault(key, defaultValue);
-    }
 
-    @Override
-    public void forEach(BiConsumer<? super K, ? super V> action) {
-        Map.super.forEach(action);
-    }
-
-    @Override
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
-        Map.super.replaceAll(function);
-    }
-
-    @Override
-    public V putIfAbsent(K key, V value) {
-        return Map.super.putIfAbsent(key, value);
-    }
-
-    @Override
-    public boolean remove(Object key, Object value) {
-        return Map.super.remove(key, value);
-    }
-
-    @Override
-    public boolean replace(K key, V oldValue, V newValue) {
-        return Map.super.replace(key, oldValue, newValue);
-    }
-
-    @Override
-    public V replace(K key, V value) {
-        return Map.super.replace(key, value);
-    }
-
-    @Override
-    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        return Map.super.computeIfAbsent(key, mappingFunction);
-    }
-
-    @Override
-    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return Map.super.computeIfPresent(key, remappingFunction);
-    }
-
-    @Override
-    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return Map.super.compute(key, remappingFunction);
-    }
-
-    @Override
-    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return Map.super.merge(key, value, remappingFunction);
-    }
-
-
-    public static class MikeEntry<K, V> implements Entry<K, V> {
+    public static class Node<K, V> implements Entry<K, V> {
         private final K key;
         private V value;
-        MikeEntry<K, V> next;
+        Node<K, V> next;
 
-        public MikeEntry(K key, V value) {
+        public Node(K key, V value) {
             this.key = key;
             this.value = value;
         }
@@ -199,11 +139,11 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
             return value;
         }
 
-        public MikeEntry<K, V> getNext() {
+        public Node<K, V> getNext() {
             return next;
         }
 
-        public void setNext(MikeEntry<K, V> next) {
+        public void setNext(Node<K, V> next) {
             this.next = next;
         }
 
