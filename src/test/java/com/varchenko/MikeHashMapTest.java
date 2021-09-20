@@ -10,16 +10,27 @@ class MikeHashMapTest {
     @Test
     void get() {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
-        mikeHashMap.put("get", "test");
-        assertEquals(mikeHashMap.get("get"), "test");
-        assertNull(mikeHashMap.get("n"));
+        mikeHashMap.put("get7", "test1");
+        mikeHashMap.put("get6", "test2");
+        mikeHashMap.put("get5", "test3");
+        mikeHashMap.put("get4", "test4");
+        mikeHashMap.put("get3", "test5");
+        mikeHashMap.put("get2", "test7");
+        mikeHashMap.put("get1", "test8");
+        assertEquals(mikeHashMap.get("get7"), "test1");
     }
 
     @Test
     void put() {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
-        mikeHashMap.put("Jon", "Wi");
-        assertEquals(mikeHashMap.get("Jon"), "Wi");
+        mikeHashMap.put("get7", "test1");
+        mikeHashMap.put("get6", "test2");
+        mikeHashMap.put("get5", "test3");
+        mikeHashMap.put("get4", "test4");
+        mikeHashMap.put("get3", "test5");
+        mikeHashMap.put("get2", "test7");
+        mikeHashMap.put("get1", "test8");
+        assertEquals(mikeHashMap.get("get1"), "test8");
     }
 
     @Test
@@ -27,14 +38,29 @@ class MikeHashMapTest {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("Jon", "Wi");
         mikeHashMap.put("KON", "lo");
+        mikeHashMap.put("get7", "test1");
+        mikeHashMap.put("get6", "test2");
+        mikeHashMap.put("get5", "test3");
+        mikeHashMap.put("get4", "test4");
+        mikeHashMap.put("get3", "test5");
+        mikeHashMap.put("get2", "test7");
+        mikeHashMap.put("get1", "test8");
         mikeHashMap.remove("Jon");
-        assertEquals(mikeHashMap.size(), 1);
+        assertEquals(mikeHashMap.size(), 8);
     }
 
     @Test
     void size(){
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
         mikeHashMap.put("Jon", "Hi");
-        assertEquals(1, mikeHashMap.size());
+        mikeHashMap.put("KON", "lo");
+        mikeHashMap.put("get7", "test1");
+        mikeHashMap.put("get6", "test2");
+        mikeHashMap.put("get5", "test3");
+        mikeHashMap.put("get4", "test4");
+        mikeHashMap.put("get3", "test5");
+        mikeHashMap.put("get2", "test7");
+        mikeHashMap.put("get1", "test8");
+        assertEquals(9, mikeHashMap.size());
     }
 }
