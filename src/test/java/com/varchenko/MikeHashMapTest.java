@@ -7,6 +7,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MikeHashMapTest {
 
+    public static void main(String[] args) {
+
+    }
+
     @Test
     void get() {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
@@ -15,9 +19,11 @@ class MikeHashMapTest {
         mikeHashMap.put("get5", "test3");
         mikeHashMap.put("get4", "test4");
         mikeHashMap.put("get3", "test5");
-        mikeHashMap.put("get2", "test7");
-        mikeHashMap.put("get1", "test8");
-        assertEquals(mikeHashMap.get("get7"), "test1");
+        mikeHashMap.put("cna", "cm");
+        mikeHashMap.put(null, "test");
+        mikeHashMap.put(null, "k");
+        String expected = mikeHashMap.get(null);
+        assertEquals(expected, "k");
     }
 
     @Test
@@ -34,33 +40,41 @@ class MikeHashMapTest {
     }
 
     @Test
-    void remove() {
+    void putNull() {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
-        mikeHashMap.put("Jon", "Wi");
-        mikeHashMap.put("KON", "lo");
-        mikeHashMap.put("get7", "test1");
-        mikeHashMap.put("get6", "test2");
-        mikeHashMap.put("get5", "test3");
-        mikeHashMap.put("get4", "test4");
-        mikeHashMap.put("get3", "test5");
-        mikeHashMap.put("get2", "test7");
-        mikeHashMap.put("get1", "test8");
-        mikeHashMap.remove("Jon");
-        assertEquals(mikeHashMap.size(), 8);
+        mikeHashMap.put(null, "lol");
+        assertEquals(mikeHashMap.get(null), "lol");
     }
 
     @Test
-    void size(){
+    void remove() {
         MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
-        mikeHashMap.put("Jon", "Hi");
-        mikeHashMap.put("KON", "lo");
+        mikeHashMap.put("Jon", "Wi");
         mikeHashMap.put("get7", "test1");
         mikeHashMap.put("get6", "test2");
         mikeHashMap.put("get5", "test3");
         mikeHashMap.put("get4", "test4");
         mikeHashMap.put("get3", "test5");
+        mikeHashMap.put("get12", "test7");
+        mikeHashMap.put("get13", "test7");
         mikeHashMap.put("get2", "test7");
-        mikeHashMap.put("get1", "test8");
-        assertEquals(9, mikeHashMap.size());
+        mikeHashMap.put("get1", "test7");
+        mikeHashMap.remove("Jon");
+        assertEquals(mikeHashMap.size(), 9);
+    }
+
+    @Test
+    void size() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
+        mikeHashMap.put("Jon", "Hi");
+        mikeHashMap.put("KONl", "lo");
+        mikeHashMap.put("get1", "test1");
+        mikeHashMap.put("get2", "test2");
+        mikeHashMap.put("get3", "test3");
+        mikeHashMap.put("get4", "test4");
+        mikeHashMap.put("get5", "test5");
+        mikeHashMap.put("get6", "test7");
+        System.out.println(mikeHashMap);
+        assertEquals(8, mikeHashMap.size());
     }
 }
