@@ -17,8 +17,8 @@ class MikeHashMapTest {
         mikeHashMap.put("cna", "cm");
         mikeHashMap.put(null, "test");
         mikeHashMap.put(null, "k");
-        String expected = mikeHashMap.get(null);
-        assertEquals("test1", mikeHashMap.get("get7"));
+        assertEquals("k", mikeHashMap.get(null));
+        System.out.println(mikeHashMap);
     }
 
     @Test
@@ -47,15 +47,8 @@ class MikeHashMapTest {
         mikeHashMap.put("get6", "k");
         mikeHashMap.put("Jon", "Wi");
         mikeHashMap.put("get9", "test1");
-        mikeHashMap.put("get8", "test2");
-        mikeHashMap.put("get7", "test3");
-        mikeHashMap.put("get5", "test5");
-        mikeHashMap.put("get4", "test7");
-        mikeHashMap.put("get3", "test7");
-        mikeHashMap.put("get2", "test7");
-        mikeHashMap.put("get1", "test7");
         mikeHashMap.remove("Jon");
-        assertEquals(9, mikeHashMap.size());
+        assertEquals(2, mikeHashMap.size());
     }
 
     @Test
@@ -71,9 +64,22 @@ class MikeHashMapTest {
         mikeHashMap.put("get6", "test7");
         System.out.println(mikeHashMap);
         assertEquals(8, mikeHashMap.size());
-
-
     }
 
-
+    @Test
+    void nonDefaultVal() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>(13, 0.69f);
+        mikeHashMap.put("n", "v");
+        mikeHashMap.put(null, "k");
+        assertEquals("k", mikeHashMap.get(null));
+    }
+    @Test
+    void putAll() {
+        MikeHashMap<String, String> mikeHashMap = new MikeHashMap<>();
+        MikeHashMap<String, String> mikeHashMap1 = new MikeHashMap<>();
+        mikeHashMap.put("k", "v");
+        mikeHashMap.put("k1", "v1");
+        mikeHashMap1.putAll(mikeHashMap);
+        assertEquals("v", mikeHashMap1.get("k"));
+    }
 }

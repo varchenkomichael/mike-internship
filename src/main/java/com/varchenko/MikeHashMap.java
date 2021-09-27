@@ -3,31 +3,35 @@ package com.varchenko;
 
 import java.util.*;
 
+// Node -> null, Node -> key null, Node -> key, value
 public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
-    private static final float LOAD_FACTOR = 0.75f;
+    private static final float DEFAULT_LOAD_FACTOR = 0.75f;
     private static final int DEFAULT_CAPACITY = 16;
     private Node<K, V>[] buckets;
-    private Node<K, V> current;
+    private float loadFactor;
     private int capacity;
-    private int size;
     private int modCount;
-
+    private int size;
 
     public MikeHashMap() {
         this.capacity = DEFAULT_CAPACITY;
-        buckets = new Node[capacity];
+        this.loadFactor = DEFAULT_LOAD_FACTOR;
+        buckets = (Node<K, V>[]) new Node[capacity];
     }
 
-    public MikeHashMap(int capacity) {
+    public MikeHashMap(int capacity, float loadFactor) {
         this();
         this.capacity = capacity;
+        this.loadFactor = loadFactor;
     }
 
     private void resize() {
-        if (size >= capacity * LOAD_FACTOR) {
-            Node<K, V>[] oldBucket = buckets;
-            buckets = new Node[capacity + (capacity >> 1)];
-            for (Node<K, V> kvNode : oldBucket) {
+        if (size >= capacity * loadFactor) {
+            capacity = capacity + (capacity >> 1);
+            Node<K, V>[] oldBuckets = buckets;
+            buckets = (Node<K, V>[]) new Node[capacity];
+            size = 0;
+            for (Node<K, V> kvNode : oldBuckets) {
                 if (kvNode != null) {
                     put(kvNode.getKey(), kvNode.getValue());
                 }
@@ -38,74 +42,125 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private int indexFor(Object k) {
         if (k != null) {
             int index = k.hashCode() & capacity - 1;
-            return index != 0 ? index : index + 1;
+            return index >= 0 ? index : -index;
         }
         return 0;
     }
 
-    private void putNotNull(K key, V value) {
-        Node<K, V> node = buckets[indexFor(key)];
-        if (node.getKey() != null) {
-            if (node.getKey().hashCode() == key.hashCode() && node.getKey().equals(key)) {
-                node.setValue(value);
-            } else {
-                node.setNext(new Node<>(key, value));
-                size++;
-                modCount++;
-            }
-        } else {
-            node.setValue(value);
-        }
+    private Node<K, V> getHead(K key) {
+        return buckets[indexFor(key)];
     }
 
-    private Node<K, V> findInNode(Node<K, V> node, Object k) {
-        Node<K, V> currentNode = node;
-        while (currentNode.hasNext()) {
-            if (node.getKey().hashCode() == k.hashCode() && node.getKey().equals(k)) {
-                return node;
+    private Node<K, V> find(Object key) {
+        return key != null ? findNotNull((K) key) : findNull();
+    }
+
+    private Node<K, V> findNotNull(K key) {
+        Node<K, V> cursor = getHead(key);
+        if (cursor != null) {
+            while (cursor.getKey() != null) {
+                if (cursor.getKey().hashCode() == key.hashCode() && cursor.getKey().equals(key)) {
+                    return cursor;
+                }
+                cursor = cursor.next;
             }
-            currentNode = currentNode.next;
         }
-        return node;
+        return null;
+    }
+
+    private Node<K, V> findNull() {
+        Node<K, V> cursor = buckets[0];
+        if (cursor != null) {
+            while (cursor.hasNext()) {
+                cursor = cursor.next;
+                if (cursor.getKey() == null) {
+                    return cursor;
+                }
+            }
+            return cursor;
+        }
+        return null;
     }
 
     @Override
-    public V get(Object k) {
-        Node<K, V> node = buckets[indexFor(k)];
-        if (node != null) {
-            if (node.getKey() != null) {
-                if (node.getKey().hashCode() == k.hashCode() && node.getKey().equals(k)) {
-                    return node.getValue();
-                }
-            }
-            return findInNode(buckets[indexFor(k)], k).getValue();
+    public V get(Object key) {
+        Node<K, V> currentNode = find(key);
+        if (currentNode != null) {
+            return currentNode.getValue();
         }
         return null;
     }
 
     @Override
     public V put(K key, V value) {
-        Node<K, V> node = buckets[indexFor(key)];
-        if (node != null) {
-            putNotNull(key, value);
-            resize();
+        resize();
+        Node<K, V> head = getHead(key);
+        if (head == null) {
+            createHead(key, value);
         } else {
-            buckets[indexFor(key)] = new Node<>(key, value);
-            resize();
-            size++;
-            modCount++;
+            return putEntry(head, key, value);
         }
-        return buckets[indexFor(key)].getValue();
+        return null;
+    }
+
+    private V putEntry(Node<K, V> head, K key, V value) {
+        Node<K, V> cursor = head;
+        if (key != null) {
+            while (cursor.hasNext()) {
+                cursor = cursor.next;
+                if (cursor.getKey().hashCode() == key.hashCode() && cursor.getKey().equals(key)) {
+                    cursor.setValue(value);
+                } else {
+                    size++;
+                    modCount++;
+                    cursor.setNext(new Node<>(key, value));
+                }
+            }
+        } else {
+            cursor = find(null);
+            if (cursor == null) {
+                cursor = new Node<>(null, value);
+                cursor = cursor.next;
+                size++;
+                modCount++;
+            }
+            cursor.setValue(value);
+        }
+        return value;
+    }
+
+    private void createHead(K key, V value) {
+        buckets[indexFor(key)] = new Node<>(key, value);
+        size++;
+        modCount++;
     }
 
     @Override
     public V remove(Object key) {
-        Node<K, V> node = buckets[indexFor(key)];
-        if (node.getKey() != null) {
-            if (node.getKey().hashCode() == key.hashCode() && node.getKey().equals(key)) {
-                findInNode(node, key).setValue(null);
-                size--;
-                modCount++;
+        Node<K, V> current = find(key);
+        Node<K, V> previous = findPrevious((K) key, current);
+        if (current != null) {
+            current.setValue(null);
+            modCount++;
+            size--;
+            if (previous != null) {
+                previous.next = current.next;
+            } else {
+                current.next = current;
+            }
+        }
+        return null;
+    }
+
+    public Node<K, V> findPrevious(K key, Node<K, V> current) {
+        Node<K, V> previous = getHead(key);
+        if (previous != current) {
+            if (previous.next == current) {
+                return previous;
+            } else {
+                while (previous.next != current) {
+                    previous = previous.next;
+                }
             }
         }
         return null;
@@ -113,15 +168,8 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-        for (K k : m.keySet()) {
-            Node<K, V> node = buckets[indexFor(k)];
-            if (node != null) {
-                putNotNull(k, m.get(k));
-                size++;
-                modCount++;
-                resize();
-            }
-            put(k, m.get(k));
+        for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+            put(entry.getKey(), entry.getValue());
         }
     }
 
@@ -131,7 +179,7 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return new MikeIterator();
+                return new FastFailIterator();
             }
 
             @Override
@@ -148,23 +196,29 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     @Override
     public String toString() {
-        for (int i = 0; i < buckets.length - 1; i++) {
-            System.out.println("[" + i + "]");
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i <= buckets.length - 1; i++) {
+            builder.append("[").append(i).append("]");
             if (buckets[i] != null) {
                 while (buckets[i].hasNext()) {
-                    System.out.println("-entry" + i + " (key: " + buckets[i].getKey() + "; value: " + buckets[i].getValue() + ")");
+                    builder.append("-entry")
+                            .append(i).append(" (key: ").append(buckets[i].getKey())
+                            .append("; ").append("value: ").append(buckets[i]
+                                    .getValue()).append(")");
                     buckets[i] = buckets[i + 1];
                 }
-                System.out.println("-entry" + i + " (key: " + buckets[i].getKey() + "; value: " + buckets[i].getValue() + ")");
+                builder.append("-entry").append(i).append(" (key: ").append(buckets[i]
+                        .getKey()).append("; value: ").append(buckets[i]
+                        .getValue()).append(")");
             } else {
-                System.out.println("  ");
+                builder.append("  ");
                 buckets[i] = buckets[i + 1];
             }
         }
-        return "[15]" + System.lineSeparator() + "-entry15 (key: " + buckets[15].getKey().toString() + "; value: " + buckets[15].getValue().toString() + ")";
+        return builder.toString();
     }
 
-    private static class Node<K, V> implements Entry<K, V> {
+    private static class Node<K, V> implements Map.Entry<K, V> {
         private Node<K, V> next;
         private final K key;
         private V value;
@@ -200,8 +254,9 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         }
     }
 
-    private class MikeIterator implements Iterator<Entry<K, V>> {
+    private class FastFailIterator implements Iterator<Map.Entry<K, V>> {
 
+        private final Node<K, V> current = buckets[size];
         private final int expectedModCount = modCount;
 
         @Override
@@ -218,8 +273,37 @@ public class MikeHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
             return null;
         }
 
-        final void checkForModification () {
+        final void checkForModification() {
             if (expectedModCount != modCount) throw new ConcurrentModificationException();
+        }
+    }
+
+    private class FastSaveIterator implements Iterator<Map.Entry<K, V>> {
+
+        private final MikeHashMap<K, V> clone = cloneMap();
+
+        @Override
+        public boolean hasNext() {
+            return (clone.buckets[size].next != null);
+        }
+
+        @Override
+        public Node<K, V> next() {
+            if (clone.buckets[size].hasNext()) {
+                return clone.buckets[size].next ;
+            }
+            return null;
+        }
+
+        final MikeHashMap<K, V> cloneMap() {
+            MikeHashMap<K, V> copy = new MikeHashMap<>();
+            for (Node<K, V> head : buckets) {
+                while (head.hasNext()) {
+                    head = head.next;
+                    copy.put(head.getKey(), head.getValue());
+                }
+            }
+                return copy;
         }
     }
 }
